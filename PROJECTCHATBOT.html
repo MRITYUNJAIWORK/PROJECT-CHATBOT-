@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> BSPTCL ENQUIRY BOT</title>
+    <style>
+        .chatbot-container {
+            width: 350px;
+            height: 500px;
+            border: 2px solid #824b97;
+            border-radius: 10px;
+            background-color: #e1f0f5;
+            font-family: Arial, sans-serif;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s;
+        }
+
+        .chatbot-header{
+            background-color: #824b97;
+            color:white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+        }
+            
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 18px;
+            cursor: default;
+        }
+
+        .minimize-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .chatbot-welcome {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 8px;
+        }
+        
+        .button-grid button {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #824b97 ;
+            background-color:#fff;
+            color: #824b97;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.4s;
+        }
+    
+        .button-grid button:hover {
+            background-color:#824b97 ;
+            color: white;
+        }
+        
+        .input-section {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background-color:#fff;
+        }
+        
+        .input-section input {
+            width: calc(100% - 50px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        
+        .input-section button {
+            background-color: beige;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+        
+        .input-section button::before {
+            content: "🚀";
+        }
+
+        .message-container {
+            padding: 10px;
+            overflow-y: auto;
+            height: 200px;
+            flex-grow: 1;
+        }
+
+        .message {
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            max-width: 70%;
+        }
+
+        .bot-message {
+            background-color: rgb(183, 120, 199);
+            color: white;
+            text-align: left;
+        }
+
+        .user-message {
+            background-color: #97b3e6;
+            text-align: right;
+            margin-left: auto;
+        }
+
+        .minimize-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: white;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+        }
+    
+        .minimize-btn::before {
+            content: "🤖"; /* Add emoji here */
+        }
+    
+        .minimized {
+            transform: scale(0);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="minimize-btn" onclick="toggleChatbot()"></div>
+
+<div class="chatbot-container" id="chatbot">
+
+    <div class="chatbot-header" >
+        <h3> BSPTCL AI </h3>
+        <span class="minimize-icon" onclick="toggleChatbot()">⛔</span>
+    </div>
+
+    <div class="chatbot-welcome">
+        <p>👋welcome to BSPTCL! I'm a Chatbot here to assist you with electricity-related queries.</p>
+    </div>
+
+    <div class="button-grid">
+        <button onclick="handleButtonClick('ABOUT BSPTCL', 'https://www.bsptcl.in/AboutUs.aspx')">ABOUT BSPTCL</button>
+        <button onclick="handleButtonClick('VISION&MISSION', 'https://www.bsptcl.in/Vision.aspx')">VISION&MISSION</button>
+        <button onclick="handleButtonClick('PHONE DIRECTORY', 'https://www.bsptcl.in/PhoneDirectory.aspx')">PHONE DIRECTORY</button>
+        <button onclick="handleButtonClick('ACTIVE TENDERS', 'https://www.bsptcl.in/Tenders.aspx')">ACTIVE TENDERS</button>
+        <button onclick="handleButtonClick('CAREEER', 'https://www.bsptcl.in/Career.aspx')">CAREER</button>
+        <button onclick="handleButtonClick('REPORTS AND ACCOUNTS', 'https://www.bsptcl.in/ReportsAccounts.aspx')">REPORTS AND ACCOUNTS</button>
+    </div>
+
+    <div class="message-container" id="messageContainer">
+
+    </div>
+
+    <div class="input-section">
+        <input type="text" id="userInput" placeholder="Type your query here..." onkeypress="checkEnter(event)">
+        <!-- Logo Button instead of Mic -->
+        <button onclick="sendMessage()"></button>
+    </div>
+</div>
+<script>
+    // Toggle the visibility of the chatbot
+    function toggleChatbot() {
+        const chatbot = document.getElementById('chatbot');
+        chatbot.classList.toggle('minimized');
+    }
+
+    // Handle button clicks and redirect user to specific pages
+    function handleButtonClick(option, link) {
+        appendMessage("You clicked: " + option, "user-message");  // Display what the user clicked
+        window.open(link, "_blank");
+    }
+
+    function appendMessage(text, type) {
+        const messageContainer = document.getElementById("messageContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message", type);  // Add either bot or user message style
+        messageDiv.innerHTML = text;
+        messageContainer.appendChild(messageDiv);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+       
+    function checkEnter(event) {
+      if (event.key === "Enter") {
+            sendMessage();  // If "Enter" is pressed, send the message
+        }
+    }
+
+    function sendMessage() {
+        const userInput = document.getElementById("userInput");
+        const userText = userInput.value.trim();
+       
+        if (userText) {
+            appendMessage(userText, "user-message");  // Show the user's input in the chat
+            botResponse(userText);  // Get the bot's response
+            userInput.value = ""; // Clear the input field
+        }
+    }
+
+    function botResponse(query) {
+        let response;
+        switch (query.toLowerCase()) {
+            case 'hello':
+                response = "Hello! How can I assist you today?";
+                break;
+
+            case 'ABOUT BSPTCL':
+            case 'about bsptcl':
+            case 'About bsptcl':
+            case 'BSPTCL':
+            case 'bsptcl':
+                response = "Bihar State Power Transmission Company Limited (BSPTCL) is responsible for the transmission of electricity across Bihar, For more details pls visit- <a href='https://www.bsptcl.in/AboutUs.aspx' target='_blank'>BSPTCL About Us</a>";
+                break;
+
+            case 'about us':
+            case 'About us':
+            case 'ABOUT US':
+                response = `In the About Us section, there are several options to explore.<br>
+                            Are you asking about :<br>
+                            1. Vision & Mission <a href='https://www.bsptcl.in/Vision.aspx' target='_blank'>Vision & Mission</a>" <br>
+                            2. Organizational Structure <a href='https://www.bsptcl.in/Organizationalchart.aspx' target='_blank'>Organizational Structure</a><br>
+                            3. Functions and Duties <a href='https://www.bsptcl.in/Functions_Duties.aspx' target='_blank'>Functions and Duties</a><br>
+                            4. Achievements <a href='https://www.bsptcl.in/Achievements.aspx' target='_blank'>Achievements</a><br>
+                            5. Act & Regulations<a href='https://www.bsptcl.in/ActRegulations.aspx' target='_blank'>Act & Regulations</a><br>
+                            6. Publications <a href='https://www.bsptcl.in/Financials.aspx?GL=2&PL=7' target='_blank'>Publications</a><br>
+                            Please select one to learn more!`;
+                break;
+
+            case 'Vision & Mission':
+            case 'Vision ':
+            case 'Mission':
+            case 'vision and mission':    
+            case 'vision ':
+                response= "Vision & Mission <a href='https://www.bsptcl.in/Vision.aspx' target='_blank'>Vision & Mission</a>";
+                break;
+
+            case 'Organizational Structure':
+            case 'organizational Structure':
+                response="Organizational Structure <a href='https://www.bsptcl.in/Organizationalchart.aspx' target='_blank'>Organizational Structure</a>";
+                break;
+
+            case 'Functions and Duties':
+            case 'functions and duties':
+            case 'functions':
+            case 'duties':
+            case ' FUNCTIONS AND DUTIES':
+            case 'FUNCTIONS':
+            case 'DUTIES':
+                response="Functions and Duties <a href='https://www.bsptcl.in/Functions_Duties.aspx' target='_blank'>Functions and Duties</a>";
+                break;
+
+            case 'Achievements':
+            case 'achievements': 
+            case 'ACHIEVEMENTS':
+                response= "Achievements <a href='https://www.bsptcl.in/Achievements.aspx' target='_blank'>Achievements</a>";
+                break;
+
+            case 'Act and Regulations':
+            case 'Act':
+            case 'Regulations':
+            case 'ACT':
+            case 'REGULATIONS':
+            case 'ACT AND REGULATIONS':
+            case 'act and regulations':
+                response= "Act & Regulations<a href='https://www.bsptcl.in/ActRegulations.aspx' target='_blank'>Act & Regulations</a>";
+                break;
+
+            case ' Publications':
+            case 'publications':
+                response= "Publications <a href='https://www.bsptcl.in/Financials.aspx?GL=2&PL=7' target='_blank'>Publications</a>";
+                break;
+
+            case 'career':
+            case 'Career':
+            case 'CAREER':
+                response= "Career<a href='https://www.bsptcl.in/Career.aspx' target='_blank'>Publications</a>";
+                break;
+
+            case 'OTHER CAREER':
+            case 'Other Career':
+            case 'other career':
+                response="other career<a href='https://www.bsptcl.in/Career.aspx' target='_blank'>other career</a>";
+                break;
+
+            case 'e-magazine':
+            case 'emagzine':
+            case 'E-MAGZINE': 
+            case 'EMAGZINE':
+                response="e-magzine<a href='https://www.bsptcl.in/Emagazine.aspx' target='_blank'>e-magzine</a>";
+                break;
+
+            case 'TENDER':
+            case 'tender':
+            case 'Tender':
+            case 'TENDERS':
+            case 'tenders':
+            case 'Tenders':
+                response=`In the TENDER section, there are several options to explore.<br>
+                            Are you asking about :<br>
+                            1. Active Tenders <a href='https://www.bsptcl.in/Tenders.aspx' target='_blank'>Active Tenders</a>" <br>
+                            2. Cancelled Tenders <a href='https://www.bsptcl.in/TenderNoticeDetails.aspx' target='_blank'>Cancelled Tenders</a><br>
+                            3. Archived Tenders <a href='https://www.bsptcl.in/ArchiveTender.aspx' target='_blank'>Archived Tenders</a><br>
+                            4. E-procurement <a href='https://eproc2.bihar.gov.in/EPSV2Web/' target='_blank'>E-procurement</a><br>
+                            Please select one to learn more!`;
+                break;
+
+            case 'Active Tenders':
+            case 'ACTIVE TENDERS':
+            case 'active tenders':
+            case 'Active Tender':
+            case 'ACTIVE TENDER':
+            case 'active tender':
+                response= "Active Tenders <a href='https://www.bsptcl.in/Tenders.aspx' target='_blank'>Active Tenders</a>";
+                break;
+
+            case 'cancelled tenders':
+            case 'CANCELLED TENDERS':
+            case 'Cancelled tenders':
+            case 'cancelled tender':
+            case 'CANCELLED TENDER':
+            case 'Cancelled tender':
+                response="Cancelled Tenders <a href='https://www.bsptcl.in/TenderNoticeDetails.aspx' target='_blank'>Organizational Structure</a>";
+                break;
+
+            case 'Archived Tenders':
+            case 'ARCHIVED TENDERS':
+            case 'archived tenders':
+            case 'Archived Tender':
+            case 'ARCHIVED TENDER':
+            case 'archived tender':
+                response= "Archived Tenders <a href='https://www.bsptcl.in/ArchiveTender.aspx' target='_blank'>Archived Tenders</a>";
+                break;
+
+            case 'E-PROCUREMENT':
+            case 'E-procurement':
+            case 'e-procurement':
+            case 'EPROCUREMENT':
+            case 'Eprocurement':
+            case 'eprocurement':
+                response= "E-procurement<a href='https://eproc2.bihar.gov.in/EPSV2Web/' target='_blank'>E-procurement</a>";
+                break;
+
+            case 'project':
+            case 'Project':
+            case 'PROJECT':
+                response=`In the PROJECT section, there are several options to explore.<br>
+                            Are you asking about :<br>
+                            1. PROJECT MONITERING SYSTEM <a href='https://pmisonline.bih.nic.in/BSPTCLPMIS/Login.aspx' target='_blank'>PROJECT MONITERING SYSTEM</a>" <br>
+                            2. ONLINE TRACKING SYSTEM <a href='https://pmisonline.bih.nic.in/OTS/Login.aspx' target='_blank'>ONLINE TRACKING SYSTEM</a><br>
+                            Please select one to learn more!`;
+                break;
+
+            case 'SLDC':
+            case 'sldc':
+                response=`In the SLDC section, there are several options to explore.<br>
+                            Are you asking about :<br>
+                            1. SLDC WEBSITE <a href='https://sldc.bsptcl.co.in/' target='_blank'>SLDC WEBSITE</a>" <br>
+                            2. OPEN ACCESS <a href='https://www.bsptcl.in/Regulations.aspx' target='_blank'>OPEN ACCESS</a><br>
+                            3. ATC/TTC <a href='https://www.bsptcl.in/ViewATCTTCWeb.aspx' target='_blank'>ATC / TTC</a><br>
+                            4. GRID CODE OF BIHAR <a href='https://www.bsptcl.in/GridCode.aspx' target='_blank'>GRID CODE OF BIHAR</a><br>
+                            5.POWER MAP OF BSPTCL <a href='https://www.bsptcl.in/PowerMap.aspx' target='_blank'>POWER MAP OF BSPTCL</a><br>
+                            6.IMPORTANT DOCUMENT <a href='https://www.bsptcl.in/SLDC.aspx' target='_blank'> IMPORTANT DOCUMENT</a><br>
+                            7.SOP <a href='https://www.bsptcl.in/SOP.aspx' target='_blank'>SOP</a><br>
+                            8.EASS <a href='https://eass.bsptcl.co.in/' target='_blank'>EASS</a><br>
+                            9. ASBM <a href='https://bhepm.in/login' taarget='_blank'>ASBM</a><br>
+                            Please select one to learn more!`;
+                break;
+
+            case 'SLDC WEBSITE':
+            case 'sldc web':
+            case 'sldc website': 
+            case 'SLDC WEB':
+                response= "SLDC WEBSITE <a href='https://sldc.bsptcl.co.in/' target='_blank'>SLDC WEBSITE</a>";
+                break;
+
+            case 'OPEN ACCESS':
+            case 'Open access':
+            case 'access':
+            case 'open':
+            case 'OPEN':
+            case 'ACCESS':
+            case 'open access':
+                response=`In the OPEN ACCESS SECTION there are two options.<br>
+                          1.OPEN ACCESS SLDC <a href='https://www.bsptcl.in/Regulations.aspx' target='_blank'>OPEN ACCESS SLDC</a><br>
+                          2.OPEN ACCESS  <a href='https://www.bsptcl.in/Downloads/OpenAccess.pdf' target='_blank'>OPEN ACCESS </a><br>
+                          Please select one to learn more!`;
+                break;
+            
+            case 'atc/ttc':
+            case 'ATC/TTC':
+            case 'ATC':
+            case 'TTC':
+            case 'atc':
+            case 'ttc':
+                response="ATC/TTC <a href='https://www.bsptcl.in/ViewATCTTCWeb.aspx' target='_blank'>ATC / TTC</a>";
+                break;
+
+            case 'GRID CODE OF BIHAR':
+            case 'grid code of bihar':
+            case 'grid code':
+            case 'GRID CODE':
+                response="GRID CODE OF BIHAR <a href='https://www.bsptcl.in/GridCode.aspx' target='_blank'>GRID CODE OF BIHAR</a>";
+                break;
+
+            case 'POWER MAP OF BSPTCL': 
+            case 'power map of bptcl': 
+            case 'POWER MAP':
+            case 'power map':
+                response="POWER MAP OF BSPTCL <a href='https://www.bsptcl.in/PowerMap.aspx' target='_blank'>POWER MAP OF BSPTCL</a>";
+                break;
+
+            case 'IMPORTANT DOCUMENT': 
+            case 'Important document': 
+            case 'important document': 
+            case 'document': 
+            case 'Document':
+                response="IMPORTANT DOCUMENT <a href='https://www.bsptcl.in/SLDC.aspx' target='_blank'> IMPORTANT DOCUMENT</a>";
+                break;
+
+            case 'sop': 
+            case 'Sop': 
+            case 'SOP':
+                response="SOP <a href='https://www.bsptcl.in/SOP.aspx' target='_blank'>SOP</a>";
+                break;
+
+            case 'eass': 
+            case 'Eass': 
+            case 'EASS':
+                response="EASS <a href='https://eass.bsptcl.co.in/' target='_blank'>EASS</a>";
+                break;
+
+            case 'asbm': 
+            case 'ASBM': 
+            case 'Asbm':
+                response="ASBM <a href='https://bhepm.in/login' taarget='_blank'>ASBM</a>";
+                break;
+            
+            case 'EMPLOYEE SECTION': 
+            case 'Employee section':
+            case 'employee section':
+                response=`In the EMPLOYEE section, there are several options to explore.<br>
+                            Are you asking about :<br>
+                            1. OFFICE ORDER <a href='https://www.bsptcl.in/OfficeOrders.aspx' target='_blank'>OFFICE ORDER</a><br>
+                            2. TRANSFER/ POSTING <a href='https://www.bsptcl.in/Transfer_Posting.aspx' target='_blank'>TRANSFER POSTING</a><br>
+                            3. PAY AND PENSION ROLL SYSTEM  <a href='http://pay.bsphcl.org/' target='_blank'>PAY ANAD PENSION ROLL SYSTEM </a><br>
+                            4. APAR <a href='https://apar.bsphcl.co.in/' target='_blank'>APAR</a><br>
+                            5.MEDICLAIM <a href='https://medical.bsphcl.co.in/' target='_blank'>MEDICLAIM</a><br>
+                            6.DOWNLOAD FORM 16 <a href='http://125.16.220.20:8077/Form16' target='_blank'>DOWNLOAD FORM 16</a><br>
+                            7.ERP <a href='https://www.bsptcl.in/ERP.aspx' target='_blank'>ERP</a><br>
+                            Please select one to learn more!`;
+                break;
+
+            case 'OFFICE ORDER': 
+            case 'Office order': 
+            case 'office order':
+                response="OFFICE ORDER <a href='https://www.bsptcl.in/OfficeOrders.aspx' target='_blank'>OFFICE ORDER</a>";
+                break;
+
+            case 'transfer and posting': 
+            case 'Transfer and posting': 
+            case 'transfer': 
+            case 'posting': 
+            case 'TRANSFER / POSTING': 
+            case 'transfer / posting': 
+            case 'Transfer / posting': 
+            case 'Transfer': 
+            case 'Posting': 
+            case 'TRANSFER AND POSTING': 
+            case 'TRANSFER': 
+            case 'POSTING': 
+                response="TRANSFER/ POSTING <a href='https://www.bsptcl.in/Transfer_Posting.aspx' target='_blank'>TRANSFER POSTING</a>";
+                break;
+
+            case 'pay and pension roll system': 
+            case 'PAY AND PENSION ROLL SYSTEM':
+            case 'pay':
+            case 'pension roll system' :
+            case 'PAY ':
+            case 'PENSION ROLL SYSTEM':
+                response="PAY AND PENSION ROLL SYSTEM  <a href='http://pay.bsphcl.org/' target='_blank'>PAY ANAD PENSION ROLL SYSTEM </a>";
+                break;
+
+            case 'apar':
+            case 'Apar':
+            case 'APAR':
+                response="APAR <a href='https://apar.bsphcl.co.in/' target='_blank'>APAR</a>";
+                break;
+
+            case 'mediclaim':
+            case 'Mediclaim':
+            case 'MEDICLAIM':
+                response="MEDICLAIM <a href='https://medical.bsphcl.co.in/' target='_blank'>MEDICLAIM</a>";
+                break;
+
+            case 'DOWNLOAD FORM 16':
+            case 'FORM 16':
+            case 'download form 16':
+            case 'form 16':
+            case 'Form 16':
+                response="DOWNLOAD FORM 16 <a href='http://125.16.220.20:8077/Form16' target='_blank'>DOWNLOAD FORM 16</a>";
+                break;
+
+            case 'ERP':
+            case 'erp':
+            case 'Erp':
+                response="ERP <a href='https://www.bsptcl.in/ERP.aspx' target='_blank'>ERP</a>";
+                break;
+
+            case 'NOTIFICATIONS':
+            case 'Notifications': 
+            case 'notifications':
+            case 'NOTIFICATION':
+            case 'Notification': 
+            case 'notification':
+                response="NOTIFICATIONS <a href='https://www.bsptcl.in/Notifications.aspx' target='_blank'>NOTIFICATIONS</a>";
+                break;
+
+            case 'CIRCULARS': 
+            case 'Circulars':
+            case 'circulars':
+            case 'CIRCULAR': 
+            case 'Circular':
+            case 'circular':
+                response="CIRCULARS <a href='https://www.bsptcl.in/Circulars.aspx' target='_blank'>CIRCULARS</a>";
+                break;
+
+            case 'REPORTS AND ACCOUNT': 
+            case 'Reports and account': 
+            case 'reports and account': 
+            case 'reports': 
+            case 'accounts':
+            case 'Reports': 
+            case 'Accounts': 
+            case 'REPORTS': 
+            case 'ACCOUNTS':
+                response="REPORTS AND ACCOUNT <a href='https://www.bsptcl.in/ReportsAccounts.aspx' target=_blank'>REPORTS AND ACCOUNT</a>";
+                break;
+
+            case 'TARIFF AND REGULATIONS': 
+            case 'tariff and regulations':
+            case 'Tariff and regulations': 
+            case 'Tariff': 
+            case 'Regulations': 
+            case 'tariff': 
+            case 'regulations': 
+            case 'TARIFF': 
+            case 'REGULATIONS':
+                response="TARIFF AND REGULATIONS <a href='https://www.bsptcl.in/TariffDetails.aspx' target=_blank'></a>";
+                break;
+
+            case 'NOTICEBOARD': 
+            case 'Noticeboard': 
+            case 'noticeboard':
+                response="NOTICEBOARD <a href='https://www.bsptcl.in/Noticeboard.aspx?DS=0' target=_blank'>NOTICEBOARD</a>";
+                break;   
+
+            case 'TECHNICAL INFO': 
+            case 'Technical info': 
+            case 'technical info':
+            case 'TECHNICAL': 
+            case 'INFO':
+            case 'Info':
+            case 'info':
+                response="TECHNICAL INFO <a href='https://www.bsptcl.in/TechnicalInformation.aspx' target=_blank'>TECHNICAL INFO</a>";
+                break;
+
+            case 'FORMS':
+            case 'Forms':
+            case 'forms':
+                response="FORMS <a href='https://www.bsptcl.in/Forms.aspx' target=_blank'>FORMS</a>";
+                break;
+
+            case 'TRAINING': 
+            case 'Training': 
+            case 'training':
+                response="TRAINING <a href='https://www.bsptcl.in/Training.aspx' target=_blank'>TRAINING</a>";
+                break;
+
+            case 'PHOTO GALLARY': 
+            case 'Photo gallary': 
+            case 'photo gallary':
+            case 'photo': 
+            case 'gallary':
+            case 'Photo': 
+            case 'Gallary':
+            case 'PHOTO': 
+            case 'GALLARY':
+                response="PHOTO GALLARY <a href='https://www.bsptcl.in/Gallery.aspx' target=_blank'>PHOTO GALLARY</a>";
+                break;
+
+            case 'DOWNLOAD': 
+            case 'Download':
+            case 'download':
+                response="DOWNLOAD <a href='https://www.bsptcl.in/Download.aspx' target=_blank'>DOWNLOAD</a>";
+                break;
+
+            case 'USEFUL LINKS':
+            case 'Useful links':
+            case 'useful links':
+            case 'USEFUL LINK':
+            case 'Useful link':
+            case 'useful link':
+                response="USEFUL LINKS <a href='https://www.bsptcl.in/UsefulLink.aspx' target=_blank'>USEFUL LINKS</a>";
+                break;
+
+            case 'phone directory': 
+            case 'PHONE DIRECTORY': 
+            case 'Phone directory':
+                response="PHONE DIRECTORY <a href='https://www.bsptcl.in/PhoneDirectory.aspx' target=_blank'>PHONE DIRECTORY</a>";
+                break;
+
+            default:
+                response = "Sorry, I don't understand that. Try clicking a button above.";
+        }
+        setTimeout(() => appendMessage(response, "bot-message"), 550);  // Delay the bot response for a more natural effect
+    }
+</script>
+<footer>
+    <p>Made by &copy; MRITYUNJAIBHAIYA</p>
+</footer>
+</body>
+</html>
